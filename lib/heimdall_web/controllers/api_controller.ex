@@ -22,32 +22,34 @@ defmodule HeimdallWeb.ApiController do
 
   # these are private methods
   defp _calculate_check_digit(upc) do
-    #this is where your code to calculate the check digit should go
     odd_positions = String.graphemes(upc)
-    |> Enum.with_index(1)
-    |> Enum.map(fn(x) -> _get_odd_positions(x) end )
-    |> Enum.filter(fn(x) -> x != "" end )
-    |> Enum.map(fn(x) -> String.to_integer(x) end )
-    |> Enum.sum
+                    |> Enum.with_index(1)
+                    |> Enum.map(fn(x) -> _get_odd_positions(x) end )
+                    |> Enum.filter(fn(x) -> x != "" end )
+                    |> Enum.map(fn(x) -> String.to_integer(x) end )
+                    |> Enum.sum
 
     even_positions = String.graphemes(upc)
-    |> Enum.with_index(1)
-    |> Enum.map(fn(x) -> _get_even_positions(x) end )
-    |> Enum.filter(fn(x) -> x != "" end )
-    |> Enum.map(fn(x) -> String.to_integer(x) end )
-    |> Enum.sum
+                     |> Enum.with_index(1)
+                     |> Enum.map(fn(x) -> _get_even_positions(x) end )
+                     |> Enum.filter(fn(x) -> x != "" end )
+                     |> Enum.map(fn(x) -> String.to_integer(x) end )
+                     |> Enum.sum
+    # I know I could have probably used `Enum.reduce`, but I prefer a slightly more verbose approach for clarity.
 
-    odd_positions = odd_positions * 3
-    sum = even_positions + odd_positions
-    remainder = rem(sum, 10)
-    
-    check_digit = if remainder === 0 do
-      0
-    else
-      10 - remainder
-    end
+    check_digit = ( odd_positions * 3 )
+                  |> + even_positions
+                  |> rem(10)
+                  |> _get_remainder
 
     upc <> Integer.to_string(check_digit)
+  end
+
+  defp _get_remainder(remainder) do
+    case remainder do
+      0 -> 0
+      _ -> 10 - remainder
+    end
   end
 
   defp _get_odd_positions(tuple) do
@@ -63,6 +65,8 @@ defmodule HeimdallWeb.ApiController do
       _ -> ""
     end
   end
+  # I feel like these odd/even functions should be able to be combined with some pattern matching,
+  # I'd to get some feedback from someone with more Elixir experience about this.
 
   # this is a thing to format your responses and return json to the client
   defp _send_json(conn, status, body) do
